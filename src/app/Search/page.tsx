@@ -10,7 +10,7 @@ import {
   Search,
 } from "lucide-react";
 import { useState } from "react";
-import { useGetSearchReasult } from "@/hooks/use-get-searchResults";
+import { useGetSearchResult } from "@/hooks/use-get-searchResults";
 import { Input } from "@/components/ui/input";
 import useDebounce from "@/hooks/useDebounce";
 import NotFound from "@/components/NotFound";
@@ -22,6 +22,7 @@ import {
   SheetTitle
 } from "@/components/ui/sheet";
 import PaginationControls from "@/components/PaginationControls";
+import AdvancedSearch from "@/components/AdvancedSearch";
 
 
 const REGIONS = {
@@ -97,9 +98,9 @@ const YEAR = {
 
 
 const SearchPage = () => {
-  const [searchTerm, setSearchTerm] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const [filter, setFilter] = useState<DocumentState>({
+    searchTerm: "",
     region: "",
     disorder: "",
     article: "",
@@ -131,9 +132,9 @@ const SearchPage = () => {
 
 
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 400);
+  const debouncedSearchTerm = useDebounce(filter.searchTerm, 400);
 
-  const { data: searches, isLoading, isError } = useGetSearchReasult(searchTerm, debouncedSearchTerm, page, filter);
+  const { data: searches, isLoading, isError } = useGetSearchResult(filter.searchTerm, debouncedSearchTerm, page, filter);
 
   const nextPage = () => setPage((prevPage) => prevPage + 1);
   const prevPage = () => setPage((prevPage) => Math.max(prevPage - 1, 1));
@@ -148,13 +149,14 @@ const SearchPage = () => {
             aria-hidden='true'
           />
           <Input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={filter.searchTerm}
+            onChange={(e) => setFilter({ ...filter, searchTerm: e.target.value })}
             className='border-0 dark:text-white dark:placeholder:text-white'
             placeholder='Search for titles'
             autoComplete="off"
           />
         </div>
+        <AdvancedSearch setFilter={setFilter} />
       </div>
 
       <div className='flex gap-6 mx-4 lg:mx-10 mt-20'>
@@ -486,19 +488,19 @@ const SearchPage = () => {
                 .fill(null)
                 .map((_, i) => <StudySkeleton key={i} />)
             ) : isError ? (
-              <div className="flex items-center col-span-3">
+              <div className="flex items-center">
                 <span className="relative flex h-2 w-2 mr-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                 </span>
-                <p className="flex text-sm font-medium text-gray-900">Something went wrong</p>
+                <p className="flex text-lg font-medium text-gray-900">Something went wrong.</p>
               </div>
             ) : (searches?.results && searches?.results.length > 0) ? (
               searches?.results?.map((study, i: number) => (
                 <StudyList key={i} study={study} />
               ))
             ) : (
-              <NotFound searchTerm={searchTerm} />
+              <NotFound searchTerm={filter.searchTerm} />
             )}
           </div>
 
